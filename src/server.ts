@@ -14,7 +14,11 @@ mongoose.connect(
   {
     autoIndex: true,
   },
-  () => {
+  (err) => {
+    if (err) {
+      console.error('Could not connect to MongoDB:\n', err);
+      return;
+    }
     console.log('Connected to MongoDB');
   }
 );
