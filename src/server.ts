@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: 'http://localhost:4200',
+    origin: ['http://localhost:4200', 'http://localhost:4201'],
     credentials: true,
     methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'PATCH', 'DELETE'],
     optionsSuccessStatus: 204,
