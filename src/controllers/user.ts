@@ -30,6 +30,16 @@ const signTokens = (user: HydratedDocument<IUser>) => {
   };
 };
 
+const liveTokens = (tokens: string[] = []): string[] =>
+  tokens.filter((token) => {
+    try {
+      jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
 const sendTokens = (response: Response, status: number, tokens: ReturnType<typeof signTokens>) =>
   response
     .cookie(REFRESH_COOKIE, tokens.refreshToken, { ...REFRESH_COOKIE_OPTIONS, maxAge: REFRESH_MAX_AGE })
@@ -68,7 +78,7 @@ const login = async (request: Request, response: Response) => {
   }
 
   const tokens = signTokens(user);
-  user.refreshToken = [...(user.refreshToken ?? []), tokens.refreshToken];
+  user.refreshToken = [...liveTokens(user.refreshToken), tokens.refreshToken];
   await user.save();
 
   return sendTokens(response, 200, tokens);
@@ -108,7 +118,7 @@ const handleRefreshToken = async (request: Request, response: Response) => {
   }
 
   const tokens = signTokens(user);
-  user.refreshToken = [...(user.refreshToken ?? []).filter((rt) => rt !== refreshToken), tokens.refreshToken];
+  user.refreshToken = [...liveTokens(user.refreshToken).filter((rt) => rt !== refreshToken), tokens.refreshToken];
   await user.save();
 
   return sendTokens(response, 200, tokens);
