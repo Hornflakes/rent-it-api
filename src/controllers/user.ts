@@ -1,9 +1,11 @@
-import { Request, Response } from 'express';
-import User from '../models/user';
 import bcrypt from 'bcryptjs';
+import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import User from '../models/user';
 
 require('dotenv').config();
+
+const DUMMY_HASH = bcrypt.hashSync('dummy-password', 16);
 
 const addUser = async (request: Request, response: Response) => {
   try {
@@ -64,13 +66,9 @@ const login = async (request: Request, response: Response) => {
   try {
     const { username, password } = request.body;
     const user = await User.findOne({ username });
-    if (!user) {
-      return response.status(401).json({ message: 'Invalid username' });
-    }
-
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      return response.status(403).json({ message: 'Invalid password' });
+    const validPassword = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
+    if (!user || !validPassword) {
+      return response.status(401).json({ message: 'Invalid credentials' });
     }
 
     const accessToken = jwt.sign({ id: user._id, username: user.username }, process.env.ACCESS_TOKEN_SECRET!, {
