@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-const roles = ['admin', 'client'] as const;
-type Role = typeof roles[number];
+export const roles = ['admin', 'client'] as const;
+export type Role = typeof roles[number];
 
 export interface IUser {
   username: string;

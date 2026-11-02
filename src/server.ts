@@ -1,8 +1,9 @@
-import http from 'http';
 import express, { Express } from 'express';
-import morgan from 'morgan';
-import routes from './routes/routes';
+import http from 'http';
 import mongoose from 'mongoose';
+import morgan from 'morgan';
+import errorHandler from './middleware/errorHandler';
+import routes from './routes/routes';
 
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -37,12 +38,13 @@ app.use(
 );
 
 app.use('/', routes);
-app.use((req, res, next) => {
+app.use((req, res) => {
   const error = new Error('not found');
   return res.status(404).json({
     message: error.message,
   });
 });
+app.use(errorHandler);
 
 const httpServer = http.createServer(app);
 const PORT: any = process.env.PORT ?? 6060;

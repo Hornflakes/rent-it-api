@@ -1,45 +1,38 @@
 import { Request, Response } from 'express';
-import Order, { IOrder } from '../models/order';
+import { getUser } from '../middleware/verifyAccessToken';
+import Order from '../models/order';
 
 const getOrders = async (request: Request, response: Response) => {
-  try {
-    const result = await Order.find();
-
-    return response.status(200).json(result);
-  } catch (err) {
-    return response.status(500).json(err);
-  }
+  const orders = await Order.find({ userId: getUser(request).id });
+  return response.status(200).json(orders);
 };
 
 const addOrder = async (request: Request, response: Response) => {
-  try {
-    const order = new Order(request.body as IOrder);
-    const result = await Order.create(order);
-
-    return response.status(200).json(result);
-  } catch (err) {
-    return response.status(500).json(err);
-  }
+  const order = await Order.create({ ...request.body, userId: getUser(request).id });
+  return response.status(201).json(order);
 };
 
 const updateOrder = async (request: Request, response: Response) => {
-  try {
-    const result = await Order.findByIdAndUpdate(request.body._id, request.body);
+  const userId = getUser(request).id;
+  const { _id, ...changes } = request.body;
 
-    return response.status(200).json(result);
-  } catch (err) {
-    return response.status(500).json(err);
+  const order = await Order.findOneAndUpdate(
+    { _id, userId },
+    { ...changes, userId },
+    { new: true, runValidators: true }
+  );
+  if (!order) {
+    return response.status(404).json({ message: 'Order not found' });
   }
+  return response.status(200).json(order);
 };
 
 const deleteOrder = async (request: Request, response: Response) => {
-  try {
-    const result = await Order.deleteOne(request.body as IOrder);
-
-    return response.status(200).json(result);
-  } catch (err) {
-    return response.status(500).json(err);
+  const { deletedCount } = await Order.deleteOne({ _id: request.body._id, userId: getUser(request).id });
+  if (!deletedCount) {
+    return response.status(404).json({ message: 'Order not found' });
   }
+  return response.status(204).end();
 };
 
 export default { getOrders, addOrder, updateOrder, deleteOrder };
